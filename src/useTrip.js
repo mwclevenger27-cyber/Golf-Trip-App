@@ -42,6 +42,11 @@ export function useTrip() {
       const fresh = await store.load();
       setData(fresh);
       setLoadError(null);
+      // The trip was renamed after the database was set up: swap the old default name once.
+      if (fresh.settings[0]?.trip_name === 'The Trip') {
+        await store.saveSettings({ trip_name: 'BTR Invitational' });
+        setData(await store.load());
+      }
     } catch (e) {
       setLoadError(e.message || 'Could not reach the database');
     }

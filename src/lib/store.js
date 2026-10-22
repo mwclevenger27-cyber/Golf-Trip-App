@@ -106,7 +106,7 @@ function demoStore() {
   const KEY = 'golf-trip-demo-v1';
   const uid = () => (crypto.randomUUID ? crypto.randomUUID() : Math.random().toString(36).slice(2));
   const seed = () => ({
-    settings: [{ id: 1, trip_name: 'The Trip', team_a_name: 'Team A', team_b_name: 'Team B', team_format: 'bestball' }],
+    settings: [{ id: 1, trip_name: 'BTR Invitational', team_a_name: 'Team A', team_b_name: 'Team B', team_format: 'bestball' }],
     players: ROSTER.map((name, i) => ({ id: uid(), name, team: i % 2 === 0 ? 'A' : 'B', start_index: 0, notes: '', created_at: new Date(Date.now() + i).toISOString() })),
     rounds: COURSES.map((c, i) => ({ id: uid(), round_no: i + 1, ...c })),
     foursomes: [],

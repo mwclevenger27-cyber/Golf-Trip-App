@@ -210,8 +210,6 @@ textarea.inp { resize: vertical; min-height: 60px; }
 .leaflet-container { font-family: 'Inter', sans-serif; }
 
 /* Trip tab map setup row */
-.map-setup { width: 100%; display: flex; justify-content: space-between; align-items: center; margin-top: 10px; padding: 10px 12px; border-radius: 10px; border: 1px dashed var(--gold); background: var(--cream); font-size: 14px; font-weight: 600; color: var(--ink); }
-.map-setup .ok { color: var(--green); }
 
 /* Leaderboard: you at a glance, team tug of war */
 .you-card { display: flex; align-items: center; gap: 12px; background: var(--white); border: 1px solid var(--gold-lt); border-left: 4px solid var(--gold); border-radius: var(--radius); padding: 12px 14px; margin-bottom: 12px; }

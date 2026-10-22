@@ -1,6 +1,5 @@
 import { useEffect, useState } from 'react';
 import { coursePar, selectedTee } from '../lib/golf.js';
-import MapSheet from '../MapSheet.jsx';
 import { CourseArt } from '../ui.jsx';
 
 // Text box that only saves when you leave it, so typing never loses focus.
@@ -48,8 +47,6 @@ export default function Trip({ trip, api }) {
 
 function RoundCard({ round, api }) {
   const [open, setOpen] = useState(false);
-  const [mapHole, setMapHole] = useState(null);
-  const mapped = round.holes.filter((h) => h.green).length;
   const tee = selectedTee(round);
   const save = (patch) => api.saveRound({ id: round.id, ...patch });
   const setHole = (i, key, raw) => {
@@ -82,11 +79,6 @@ function RoundCard({ round, api }) {
         </div>
         <button className="btn btn-sm" onClick={() => setOpen(!open)}>{open ? 'Done' : 'Edit'}</button>
       </div>
-      <button className="map-setup" onClick={() => setMapHole(0)}>
-        <span>🗺️ Hole map</span>
-        <span className={mapped === 18 ? 'ok' : ''}>{mapped === 18 ? 'All 18 flags set ✓' : `${mapped} of 18 flags set · set up ›`}</span>
-      </button>
-      {mapHole !== null && <MapSheet round={round} hole={mapHole} setHole={setMapHole} api={api} onClose={() => setMapHole(null)} />}
       {round.note && <div className="warn">{round.note}</div>}
       {!siOk && <div className="warn">Two holes share a handicap number. Each of 1–18 should be used once.</div>}
 

@@ -44,6 +44,12 @@ export default function Leaderboard({ trip, meId }) {
   const rankLabels = ranks(rows, (r) => r.score);
 
   const isPoints = format === 'matchplay';
+  // Share of the bar for team A: points won, or strokes better than the other side.
+  const share = isPoints
+    ? (team.A + team.B ? team.A / (team.A + team.B) : 0.5)
+    : Math.min(0.9, Math.max(0.1, 0.5 + (team.B - team.A) / 40));
+  const myRowIndex = rows.findIndex((r) => r.player.id === meId);
+  const mine = rows[myRowIndex];
   const lead = team.A === team.B ? 'All square' : (isPoints ? team.A > team.B : team.A < team.B) ? `${teamName('A', settings)} lead` : `${teamName('B', settings)} lead`;
 
   return (
@@ -57,6 +63,17 @@ export default function Leaderboard({ trip, meId }) {
         ))}
       </div>
 
+      {mine?.started && (
+        <div className="you-card">
+          <div className="pos">{rankLabels[myRowIndex]}</div>
+          <div className="what">
+            <b>You, {type}</b>
+            {round ? (mine.thru === 18 ? `Finished · shot ${mine.gross}` : `Through ${mine.thru} holes`) : `${mine.holes} holes on the trip`}
+          </div>
+          <div className="tp"><ToPar value={mine.score} /></div>
+        </div>
+      )}
+
       <div className="card">
         <div className="hero">
           <div>
@@ -69,8 +86,8 @@ export default function Leaderboard({ trip, meId }) {
             <div className="team-score">{isPoints ? team.B : <ToPar value={team.B} />}</div>
           </div>
         </div>
-        <div className="rule-gold" />
-        <div className="muted" style={{ textAlign: 'center' }}>{lead} · {FORMAT_LABEL[format]}</div>
+        <div className="tug"><div style={{ width: `${share * 100}%` }} /></div>
+        <div className="muted" style={{ textAlign: 'center', marginTop: 10 }}>{lead} · {FORMAT_LABEL[format]}</div>
       </div>
 
       <div className="card">

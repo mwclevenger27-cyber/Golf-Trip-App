@@ -1,7 +1,7 @@
 {
   "name": "BTR Invitational",
   "short_name": "BTR Inv.",
-  "description": "Beyond the Ridge Invitational: live scoring, yardages and trash talk",
+  "description": "Beyond the Ridge Invitational: live scoring, yardages and group chat",
   "start_url": "/",
   "display": "standalone",
   "background_color": "#FBF9F3",

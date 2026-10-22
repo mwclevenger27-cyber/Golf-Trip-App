@@ -222,3 +222,13 @@ textarea.inp { resize: vertical; min-height: 60px; }
 .tug { position: relative; height: 8px; border-radius: 999px; background: var(--team-b-tint); overflow: hidden; margin: 12px 4px 0; }
 .tug > div { position: absolute; left: 0; top: 0; bottom: 0; background: var(--green); border-radius: 999px; transition: width 0.4s; }
 .tug::after { content: ''; position: absolute; left: 50%; top: -2px; bottom: -2px; width: 2px; background: var(--gold); }
+
+.group-sizes { display: flex; flex-wrap: wrap; gap: 6px; margin: 4px 0 4px; padding: 8px 0; position: sticky; top: -20px; background: var(--white); z-index: 1; }
+.group-sizes span { font-size: 12px; font-weight: 600; padding: 4px 8px; border-radius: 8px; background: var(--white); border: 1px solid var(--line); color: var(--muted); }
+.group-sizes span.full { background: var(--green-tint); color: var(--green); border-color: transparent; }
+.group-sizes span.over { background: #fbe9e4; color: #a33a1c; border-color: transparent; }
+.group-row { display: flex; align-items: center; gap: 10px; padding: 7px 0; border-bottom: 1px solid var(--line); }
+.group-row .nm { flex: 1; min-width: 0; font-weight: 600; font-size: 14px; }
+.group-row .nm small { display: block; font-weight: 500; font-size: 11px; color: var(--muted); }
+.group-row .seg button { padding: 8px 11px; }
+.group-row .seg button.on { background: var(--green); color: var(--cream); }

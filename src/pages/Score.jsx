@@ -1,9 +1,10 @@
 import { useEffect, useState } from 'react';
-import { foursomes, shuffleFoursomes, cardFor, played, courseHandicap, strokesOnHole, playerRoundLine, toParLabel } from '../lib/golf.js';
+import { foursomes, cardFor, played, courseHandicap, strokesOnHole, playerRoundLine, toParLabel } from '../lib/golf.js';
 import { defaultRoundId, formatIndex } from '../ui.jsx';
 import { greenYardages, distanceYards } from '../lib/geo.js';
 import { useGps, gpsWanted, useWakeLock } from '../useGps.js';
 import MapSheet from '../MapSheet.jsx';
+import GroupsSheet from '../GroupsSheet.jsx';
 
 const HOLE_KEY = 'golf-trip-hole';
 
@@ -37,11 +38,7 @@ export default function Score({ trip, api, me, meId }) {
     setHole(0);
   };
 
-  const roundHasScores = trip.scores.some((s) => s.round_id === round.id);
-  const makeGroups = () => {
-    if (roundHasScores && !confirm('Scores are already in for this round. Reshuffle the groups anyway? Scores are kept.')) return;
-    api.setFoursomes(round.id, shuffleFoursomes(trip.players));
-  };
+  const [editingGroups, setEditingGroups] = useState(false);
 
   const h = round.holes[hole];
   const allDone = (i) => group.length > 0 && group.every((p) => played(cardFor(trip.scoreMap, round.id, p.id)[i]));
@@ -68,8 +65,8 @@ export default function Score({ trip, api, me, meId }) {
       {groups.length === 0 ? (
         <div className="card">
           <h3 className="card-title">{round.name}</h3>
-          <p className="muted">No foursomes yet for this round. Shuffle them to start scoring. Each group gets two players from each team.</p>
-          <button className="btn btn-primary btn-block" onClick={makeGroups} disabled={trip.players.length === 0}>Make foursomes</button>
+          <p className="muted">No foursomes yet for this round. Put everyone in a group to start scoring.</p>
+          <button className="btn btn-primary btn-block" onClick={() => setEditingGroups(true)} disabled={trip.players.length === 0}>Set foursomes</button>
         </div>
       ) : (
         <>
@@ -143,10 +140,11 @@ export default function Score({ trip, api, me, meId }) {
           {mapOpen && <MapSheet round={round} hole={hole} setHole={setHole} gps={gps} api={api} onClose={() => setMapOpen(false)} />}
 
           <div className="row" style={{ justifyContent: 'center', marginTop: 18 }}>
-            <button className="btn btn-sm" onClick={makeGroups}>Reshuffle foursomes</button>
+            <button className="btn btn-sm" onClick={() => setEditingGroups(true)}>Change foursomes</button>
           </div>
         </>
       )}
+      {editingGroups && <GroupsSheet trip={trip} round={round} api={api} onClose={() => setEditingGroups(false)} />}
     </>
   );
 }

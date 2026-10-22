@@ -39,7 +39,7 @@ export default function Chat({ trip, api, me, onPickMe }) {
   return (
     <div className="chat">
       {messages.length === 0 && (
-        <div className="empty">Group chat</div>
+        <div className="empty">Live chat feed</div>
       )}
       {messages.map((m, i) => {
         const who = byId[m.player_id];

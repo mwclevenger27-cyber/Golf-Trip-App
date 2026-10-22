@@ -79,7 +79,6 @@ function RoundCard({ round, api }) {
         </div>
         <button className="btn btn-sm" onClick={() => setOpen(!open)}>{open ? 'Done' : 'Edit'}</button>
       </div>
-      {round.note && <div className="warn">{round.note}</div>}
       {!siOk && <div className="warn">Two holes share a handicap number. Each of 1–18 should be used once.</div>}
 
       {open && (
@@ -106,9 +105,6 @@ function RoundCard({ round, api }) {
           <label className="lbl" style={{ marginTop: 10 }}>Hole handicap (1 = hardest)</label>
           {holeInputs('si', 0)}
           {holeInputs('si', 9)}
-          {round.note && (
-            <button className="btn btn-sm" style={{ marginTop: 10 }} onClick={() => save({ note: '' })}>I checked the scorecard, hide the warning</button>
-          )}
         </div>
       )}
     </div>

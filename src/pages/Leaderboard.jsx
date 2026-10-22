@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { roundLeaderboard, tripLeaderboard, teamTripScore, teamRoundScore, foursomes, cardFor, played, coursePar, playerRoundLine } from '../lib/golf.js';
-import { Avatar, ToPar, Sheet, teamName, defaultRoundId, formatIndex } from '../ui.jsx';
+import { Avatar, ToPar, Sheet, teamName, defaultRoundId, formatIndex, CourseArt } from '../ui.jsx';
 
 const FORMAT_LABEL = { aggregate: 'Aggregate net strokes', bestball: 'Best ball (net)', matchplay: 'Match play points' };
 
@@ -155,6 +155,7 @@ function CardSheet({ trip, playerId, roundId, onPickRound, onClose }) {
           <button key={r.id} className={`chip ${r.id === roundId ? 'on' : ''}`} onClick={() => onPickRound(r.id)}>R{r.round_no}</button>
         ))}
       </div>
+      <CourseArt round={round} />
       <div className="muted" style={{ marginBottom: 8 }}>
         {round.name} · par {coursePar(round)} · played off {formatIndex(idx.before[roundId])} (gets {line.courseHcp} strokes)
       </div>

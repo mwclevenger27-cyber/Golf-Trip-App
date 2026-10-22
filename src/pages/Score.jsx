@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { foursomes, cardFor, played, courseHandicap, strokesOnHole, playerRoundLine, toParLabel } from '../lib/golf.js';
-import { defaultRoundId, formatIndex } from '../ui.jsx';
+import { defaultRoundId, formatIndex, CourseArt } from '../ui.jsx';
 import { greenYardages, distanceYards } from '../lib/geo.js';
 import { useGps, gpsWanted, useWakeLock } from '../useGps.js';
 import MapSheet from '../MapSheet.jsx';
@@ -64,6 +64,7 @@ export default function Score({ trip, api, me, meId }) {
 
       {groups.length === 0 ? (
         <div className="card">
+          <CourseArt round={round} />
           <h3 className="card-title">{round.name}</h3>
           <p className="muted">No foursomes yet for this round. Put everyone in a group to start scoring.</p>
           <button className="btn btn-primary btn-block" onClick={() => setEditingGroups(true)} disabled={trip.players.length === 0}>Set foursomes</button>

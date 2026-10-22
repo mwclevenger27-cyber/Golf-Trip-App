@@ -232,3 +232,4 @@ textarea.inp { resize: vertical; min-height: 60px; }
 .group-row .nm small { display: block; font-weight: 500; font-size: 11px; color: var(--muted); }
 .group-row .seg button { padding: 8px 11px; }
 .group-row .seg button.on { background: var(--green); color: var(--cream); }
+.course-art { display: block; width: 100%; border-radius: 10px; margin-bottom: 12px; background: #f6f5f1; }

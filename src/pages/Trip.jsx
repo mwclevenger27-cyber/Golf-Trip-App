@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { coursePar, selectedTee } from '../lib/golf.js';
 import MapSheet from '../MapSheet.jsx';
+import { CourseArt } from '../ui.jsx';
 
 // Text box that only saves when you leave it, so typing never loses focus.
 function SavingInput({ value, onSave, ...props }) {
@@ -72,6 +73,7 @@ function RoundCard({ round, api }) {
 
   return (
     <div className="card">
+      <CourseArt round={round} />
       <div className="between">
         <div>
           <div className="lbl" style={{ marginBottom: 2 }}>Round {round.round_no} · {round.day_label} · {round.tee_time}</div>

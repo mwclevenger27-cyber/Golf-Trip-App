@@ -63,12 +63,13 @@ export default function App() {
     <>
       <header className="top">
         <div className="top-inner">
-          <div>
+          <img className="logo" src="/logo.png" alt="Beyond the Ridge Invitational" />
+          <div className="title">
             <div className="eyebrow">
               <span className={`live-dot ${live ? '' : 'off'}`} />
               {demo ? 'Demo mode' : live ? 'Live' : 'Connecting'}
             </div>
-            <div className="trip-name">{settings.trip_name || 'The Trip'}</div>
+            <div className="trip-name">{settings.trip_name || 'BTR Invitational'}</div>
           </div>
           {trip && (
             <button className="me-btn" onClick={() => setPickingMe(true)}>

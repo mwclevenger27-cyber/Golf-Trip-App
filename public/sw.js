@@ -1,7 +1,7 @@
 // Service worker: lets the app open and show saved hole maps without signal.
 // Pages load fresh when online; app files and map pictures come from the
 // cache first. Scores and chat never go through here, they use the database.
-const APP = 'trip-app-v1';
+const APP = 'trip-app-v2';
 const TILES = 'trip-tiles-v1';
 
 self.addEventListener('install', () => self.skipWaiting());

@@ -18,7 +18,7 @@ const sql = `-- Golf Trip App database setup.
 
 create table if not exists settings (
   id int primary key default 1 check (id = 1),
-  trip_name text not null default 'The Trip',
+  trip_name text not null default 'BTR Invitational',
   team_a_name text not null default 'Team A',
   team_b_name text not null default 'Team B',
   team_format text not null default 'bestball' check (team_format in ('aggregate', 'bestball', 'matchplay')),
@@ -91,6 +91,7 @@ begin
 end $$;
 
 insert into settings (id) values (1) on conflict (id) do nothing;
+update settings set trip_name = 'BTR Invitational' where id = 1 and trip_name = 'The Trip';
 
 insert into rounds (round_no, name, day_label, play_date, tee_time, holes, tees, tee_name, note) values
 ${rounds}

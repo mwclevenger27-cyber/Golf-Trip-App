@@ -5,7 +5,7 @@
 
 create table if not exists settings (
   id int primary key default 1 check (id = 1),
-  trip_name text not null default 'The Trip',
+  trip_name text not null default 'BTR Invitational',
   team_a_name text not null default 'Team A',
   team_b_name text not null default 'Team B',
   team_format text not null default 'bestball' check (team_format in ('aggregate', 'bestball', 'matchplay')),
@@ -78,6 +78,7 @@ begin
 end $$;
 
 insert into settings (id) values (1) on conflict (id) do nothing;
+update settings set trip_name = 'BTR Invitational' where id = 1 and trip_name = 'The Trip';
 
 insert into rounds (round_no, name, day_label, play_date, tee_time, holes, tees, tee_name, note) values
   (1, 'World Tour Golf Links', 'Thu, Apr 1', '2027-04-01', '2:21 PM', '[{"par":4,"si":15},{"par":5,"si":3},{"par":3,"si":7},{"par":4,"si":5},{"par":5,"si":1},{"par":4,"si":11},{"par":3,"si":9},{"par":4,"si":13},{"par":4,"si":17},{"par":4,"si":12},{"par":5,"si":10},{"par":3,"si":18},{"par":4,"si":2},{"par":3,"si":14},{"par":5,"si":8},{"par":4,"si":6},{"par":4,"si":16},{"par":4,"si":4}]'::jsonb, '[{"name":"Black","yards":6525,"rating":71.8,"slope":132},{"name":"Gold","yards":6214,"rating":70.5,"slope":129},{"name":"Silver","yards":5826,"rating":68.5,"slope":123}]'::jsonb, 'Gold', 'Has several sets of nines. Check which ones you are playing.'),

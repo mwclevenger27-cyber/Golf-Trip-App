@@ -38,11 +38,6 @@ export default function Chat({ trip, api, me, onPickMe }) {
 
   return (
     <div className="chat">
-      {messages.length === 0 && (
-        <div className="empty">
-          Nothing yet. Birdies, blowups and 3-par streaks will show up here automatically. Start the trash talk.
-        </div>
-      )}
       {messages.map((m, i) => {
         const who = byId[m.player_id];
         if (m.kind === 'event') {

@@ -49,8 +49,8 @@ export function formatIndex(n) {
   return n < 0 ? `+${Math.abs(n).toFixed(1)}` : Number(n).toFixed(1);
 }
 
-// Course art for rounds that have it (round 4's is still missing).
-const COURSE_ART = { 1: '/courses/r1.jpg', 2: '/courses/r2.jpg', 3: '/courses/r3.jpg' };
+// Course art for each round.
+const COURSE_ART = { 1: '/courses/r1.jpg', 2: '/courses/r2.jpg', 3: '/courses/r3.jpg', 4: '/courses/r4.jpg' };
 export function CourseArt({ round }) {
   const src = COURSE_ART[round?.round_no];
   return src ? <img className="course-art" src={src} alt={`${round.name} course map`} loading="lazy" /> : null;

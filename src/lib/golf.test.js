@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import {
   strokesOnHole, courseHandicap, handicapHistory, buildScoreMap, playerRoundLine,
-  teamRoundScore, shuffleFoursomes, tripLeaderboard,
+  teamRoundScore, shuffleFoursomes, tripLeaderboard, detectEvents, balanceTeams,
 } from './golf.js';
 import { COURSES } from './courses.js';
 
@@ -136,5 +136,40 @@ describe('shuffleFoursomes', () => {
       expect(g.filter((id) => Number(id.slice(1)) % 2 === 0)).toHaveLength(2);
     }
     expect(new Set(groups.flat()).size).toBe(16);
+  });
+});
+
+describe('detectEvents', () => {
+  const r = worldTour;
+  const card = Array(18).fill(null);
+  it('finds birdies, blowups and par streaks', () => {
+    const c = [...card];
+    c[0] = r.holes[0].par - 1; // birdie
+    c[1] = r.holes[1].par + 2; // double
+    c[2] = r.holes[2].par; c[3] = r.holes[3].par; c[4] = r.holes[4].par; // 3 pars
+    c[5] = r.holes[5].par + 1; // bogey: nothing
+    const keys = detectEvents(c, r).map((e) => e.key);
+    expect(keys).toEqual(['under|1', 'over|2', 'pars|3|3']);
+  });
+  it('posts again at 6 pars, not at 4 or 5', () => {
+    const c = r.holes.map((h) => h.par);
+    c[6] = r.holes[6].par + 1;
+    const keys = detectEvents(c, r).map((e) => e.key).filter((k) => k.startsWith('pars'));
+    expect(keys).toEqual(['pars|1|3', 'pars|1|6', 'pars|8|3', 'pars|8|6', 'pars|8|9']);
+  });
+  it('calls a 1 a hole in one', () => {
+    const c = [...card];
+    c[2] = 1;
+    expect(detectEvents(c, r)[0].key).toBe('ace|3');
+  });
+});
+
+describe('balanceTeams', () => {
+  it('splits 16 evenly with similar handicap totals', () => {
+    const players = Array.from({ length: 16 }, (_, i) => ({ id: `p${i}`, start_index: i * 2 }));
+    const teams = balanceTeams(players);
+    const total = (t) => teams.filter((x) => x.team === t).reduce((s, x) => s + Number(x.id.slice(1)) * 2, 0);
+    expect(teams.filter((x) => x.team === 'A')).toHaveLength(8);
+    expect(total('A')).toBe(total('B'));
   });
 });

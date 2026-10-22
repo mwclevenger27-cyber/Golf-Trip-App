@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { createStore } from './lib/store.js';
-import { buildScoreMap, handicapHistory, sortRounds } from './lib/golf.js';
+import { buildScoreMap, handicapHistory, sortRounds, detectEvents, HOLES } from './lib/golf.js';
 
 const PENDING_KEY = 'golf-trip-pending-scores';
 const keyOf = (r, p, h) => `${r}|${p}|${h}`;
@@ -18,7 +18,13 @@ function writePending(pending) {
 // with a blank trip: if loading fails we show an error and try again.
 export function useTrip() {
   const store = useMemo(() => createStore(), []);
-  const [data, setData] = useState(null);
+  const [data, setDataState] = useState(null);
+  // Mirror of data that's always current, so saving code can read it mid-loop.
+  const dataRef = useRef(null);
+  const setData = useCallback((next) => {
+    dataRef.current = typeof next === 'function' ? next(dataRef.current) : next;
+    setDataState(dataRef.current);
+  }, []);
   const [loadError, setLoadError] = useState(null);
   const [live, setLive] = useState(false);
   const [pending, setPending] = useState(readPending);
@@ -45,7 +51,7 @@ export function useTrip() {
     if (!d) return d;
     const rest = d.scores.filter((s) => !(s.round_id === row.round_id && s.player_id === row.player_id && s.hole === row.hole));
     return { ...d, scores: type === 'delete' ? rest : [...rest, row] };
-  }), []);
+  }), [setData]);
 
   useEffect(() => {
     reload();
@@ -68,6 +74,31 @@ export function useTrip() {
     };
   }, [store, reload, applyScore]);
 
+  // After a score saves, post any new big moments for that player's round to
+  // the chat and take down ones a corrected score no longer earns.
+  const syncEvents = useCallback(async (roundId, playerId) => {
+    const d = dataRef.current;
+    const round = d?.rounds.find((x) => x.id === roundId);
+    const player = d?.players.find((x) => x.id === playerId);
+    if (!round || !player) return;
+    const card = Array(HOLES).fill(null);
+    for (const sc of d.scores) if (sc.round_id === roundId && sc.player_id === playerId) card[sc.hole - 1] = sc.strokes;
+    const prefix = `${roundId}|${playerId}|`;
+    const course = round.name.replace('Myrtle Beach National ', '');
+    const want = detectEvents(card, round).map((e) => ({
+      event_key: prefix + e.key,
+      player_id: playerId,
+      body: `${e.emoji} ${player.name} ${e.text} at ${course}`,
+    }));
+    const have = new Set(d.messages.filter((m) => m.event_key?.startsWith(prefix)).map((m) => m.event_key));
+    const wantKeys = new Set(want.map((m) => m.event_key));
+    try {
+      await store.syncEvents(want.filter((m) => !have.has(m.event_key)), [...have].filter((k) => !wantKeys.has(k)));
+    } catch {
+      // Chat posts are a bonus; never let them hold up saving scores.
+    }
+  }, [store]);
+
   const flush = useCallback(async () => {
     if (flushing.current) return;
     flushing.current = true;
@@ -78,6 +109,7 @@ export function useTrip() {
           await store.setScore(r, p, Number(h), strokes);
           // Put the saved score into our copy now rather than waiting for the live echo.
           applyScore(strokes === null ? 'delete' : 'upsert', { round_id: r, player_id: p, hole: Number(h), strokes });
+          syncEvents(r, p);
           // Only clear it if nobody changed this hole again while we were saving.
           updatePending((cur) => {
             if (cur[key] !== strokes) return cur;
@@ -91,7 +123,7 @@ export function useTrip() {
     } finally {
       flushing.current = false;
     }
-  }, [store, applyScore]);
+  }, [store, applyScore, syncEvents]);
 
   useEffect(() => {
     if (!Object.keys(pending).length) return;
@@ -144,8 +176,10 @@ export function useTrip() {
     reload,
     setScore,
     savePlayer: act(store.savePlayer),
+    updatePlayers: act(store.updatePlayers),
     deletePlayer: act(store.deletePlayer),
     saveRound: act(store.saveRound),
+    postMessage: act(store.postMessage),
     saveSettings: act(store.saveSettings),
     setFoursomes: act(store.setFoursomes),
   };

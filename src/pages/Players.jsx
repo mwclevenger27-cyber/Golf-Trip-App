@@ -1,34 +1,61 @@
 import { useState } from 'react';
 import { Avatar, TeamPill, Sheet, formatIndex, teamName } from '../ui.jsx';
+import { balanceTeams } from '../lib/golf.js';
 
 export default function Players({ trip, api, meId, onChooseMe }) {
   const [editing, setEditing] = useState(null);
+  const [assigning, setAssigning] = useState(false);
   const { players, indexes, settings } = trip;
   const byTeam = (t) => players.filter((p) => (p.team === 'A') === (t === 'A'));
+  const flip = (p) => api.updatePlayers([{ id: p.id, team: p.team === 'A' ? 'B' : 'A' }]);
+  const balance = () => {
+    if (!confirm('Split everyone into two even teams based on their starting handicaps? This replaces the current teams.')) return;
+    api.updatePlayers(balanceTeams(players));
+  };
 
   return (
     <>
-      <div className="between" style={{ marginBottom: 12 }}>
-        <span className="muted">{players.length} players · tap anyone to edit</span>
-        <button className="btn btn-primary btn-sm" onClick={() => setEditing({ name: '', team: 'A', start_index: '', notes: '' })}>+ Add player</button>
-      </div>
+      {assigning ? (
+        <div className="card" style={{ background: 'var(--green-tint)' }}>
+          <div className="between">
+            <strong>Tap a player to move them to the other team</strong>
+            <button className="btn btn-primary btn-sm" onClick={() => setAssigning(false)}>Done</button>
+          </div>
+          <div className="row" style={{ marginTop: 10 }}>
+            <span className="mono">{byTeam('A').length} vs {byTeam('B').length}</span>
+            <button className="btn btn-sm" style={{ marginLeft: 'auto' }} onClick={balance}>Balance by handicap</button>
+          </div>
+        </div>
+      ) : (
+        <div className="between" style={{ marginBottom: 12 }}>
+          <span className="muted">{players.length} players · tap to edit</span>
+          <div className="row">
+            <button className="btn btn-sm" onClick={() => setAssigning(true)}>Assign teams</button>
+            <button className="btn btn-primary btn-sm" onClick={() => setEditing({ name: '', team: 'A', start_index: '', notes: '' })}>+ Add</button>
+          </div>
+        </div>
+      )}
       {['A', 'B'].map((t) => (
         <div className="card" key={t}>
-          <h3 className="card-title">{teamName(t, settings)}</h3>
+          <h3 className="card-title">{teamName(t, settings)} <span className="muted">({byTeam(t).length})</span></h3>
           {byTeam(t).map((p) => {
             const idx = indexes[p.id];
             const diff = Math.round((idx.current - idx.start) * 10) / 10;
             return (
-              <button key={p.id} className={`lb-row ${p.id === meId ? 'me-row' : ''}`} onClick={() => setEditing(p)}>
+              <button key={p.id} className={`lb-row ${p.id === meId ? 'me-row' : ''}`} onClick={() => (assigning ? flip(p) : setEditing(p))}>
                 <Avatar player={p} />
                 <div>
                   <div className="lb-name">{p.name}</div>
                   <div className="lb-sub">{p.notes || `Started at ${formatIndex(idx.start)}`}</div>
                 </div>
+                {assigning ? (
+                  <span className="lb-score btn btn-sm">→ {teamName(t === 'A' ? 'B' : 'A', settings)}</span>
+                ) : (
                 <div className="lb-score">
                   <div className="tp mono">{formatIndex(idx.current)}</div>
                   <div className="thru">{diff === 0 ? 'handicap' : `${diff > 0 ? '▲' : '▼'} ${Math.abs(diff).toFixed(1)} on trip`}</div>
                 </div>
+                )}
               </button>
             );
           })}

@@ -131,7 +131,7 @@ function PlayerHole({ player, trip, round, hole, isMe, onSet }) {
           {strokes !== 0 && <span className="dots" title={`${strokes} stroke${Math.abs(strokes) === 1 ? '' : 's'} here`}>{strokes > 0 ? '•'.repeat(strokes) : '−'}</span>}
         </div>
         <div className="tot">
-          {line.thru ? `${toParLabel(line.grossToPar)} thru ${line.thru} · net ${toParLabel(line.netToPar)}` : `HCP ${formatIndex(index)} · ${ch >= 0 ? `gets ${ch}` : `gives back ${-ch}`}`}
+          {line.thru ? `${toParLabel(line.grossToPar)} thru ${line.thru} · net ${toParLabel(line.netToPar)}` : `HCP ${formatIndex(index)} · course ${ch < 0 ? `+${-ch}` : ch}`}
           {played(value) && <button className="clear" onClick={() => onSet(null)}>clear</button>}
         </div>
       </div>

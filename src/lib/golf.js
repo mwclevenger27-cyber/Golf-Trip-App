@@ -239,3 +239,51 @@ export function teamTripScore(format, players, rounds, groupRows, scoreMap, inde
   }
   return total;
 }
+
+// Big moments that get posted to the chat automatically, from one player's
+// card for one round. Each event has a stable key so it's only posted once,
+// and so it can be taken back down if the score gets corrected.
+//   birdie or better, double bogey or worse, and every 3 pars in a row
+const UNDER = { 1: ['🐦', 'made birdie'], 2: ['🦅', 'made EAGLE'], 3: ['🦢', 'made an ALBATROSS'] };
+const OVER = { 2: ['💥', 'made double bogey'], 3: ['🧨', 'made triple bogey'] };
+
+export function detectEvents(card, round) {
+  const events = [];
+  card.forEach((s, i) => {
+    if (!played(s)) return;
+    const diff = s - round.holes[i].par;
+    const hole = i + 1;
+    if (s === 1) {
+      events.push({ key: `ace|${hole}`, emoji: '🚨', text: `made a HOLE IN ONE on ${hole}` });
+    } else if (diff <= -1) {
+      const [emoji, phrase] = UNDER[-diff] || ['🤯', `went ${diff} on a single hole`];
+      events.push({ key: `under|${hole}`, emoji, text: `${phrase} on ${hole}` });
+    } else if (diff >= 2) {
+      const [emoji, phrase] = OVER[diff] || ['💀', `made a ${s} (+${diff})`];
+      events.push({ key: `over|${hole}`, emoji, text: `${phrase} on ${hole}` });
+    }
+  });
+  // Pars in a row: post at 3, 6, 9... within each unbroken run.
+  let start = null;
+  for (let i = 0; i <= card.length; i++) {
+    const isPar = i < card.length && played(card[i]) && card[i] === round.holes[i].par;
+    if (isPar && start === null) start = i;
+    if (!isPar && start !== null) {
+      for (let n = 3; n <= i - start; n += 3) {
+        events.push({ key: `pars|${start + 1}|${n}`, emoji: '🔥', text: `has ${n} pars in a row (holes ${start + 1}–${start + n})` });
+      }
+      start = null;
+    }
+  }
+  return events;
+}
+
+// Even teams by handicap: sort best to worst, then snake draft A, B, B, A, A, B...
+// Players with the same handicap are shuffled so it isn't the same split every time.
+export function balanceTeams(players, random = Math.random) {
+  const order = players
+    .map((p) => ({ p, r: random() }))
+    .sort((a, b) => Number(a.p.start_index) - Number(b.p.start_index) || a.r - b.r)
+    .map((x) => x.p);
+  return order.map((p, i) => ({ id: p.id, team: i % 4 === 0 || i % 4 === 3 ? 'A' : 'B' }));
+}

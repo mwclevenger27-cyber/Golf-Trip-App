@@ -5,13 +5,16 @@ import Leaderboard from './pages/Leaderboard.jsx';
 import Score from './pages/Score.jsx';
 import Players from './pages/Players.jsx';
 import Trip from './pages/Trip.jsx';
+import Chat from './pages/Chat.jsx';
 
 const ME_KEY = 'golf-trip-me';
 const TAB_KEY = 'golf-trip-tab';
+const SEEN_KEY = 'golf-trip-chat-seen';
 
 const TABS = [
   { id: 'board', label: 'Leaderboard', icon: <path d="M4 20V11M12 20V4M20 20v-6" /> },
   { id: 'score', label: 'Score', icon: <><rect x="4" y="3" width="16" height="18" rx="2" /><path d="M8 8h8M8 12h8M8 16h4" /></> },
+  { id: 'chat', label: 'Chat', icon: <path d="M4 5h16v11H9l-5 4V5Z" /> },
   { id: 'players', label: 'Players', icon: <><circle cx="9" cy="8" r="3" /><path d="M3 20c0-3.3 2.7-6 6-6s6 2.7 6 6M16 5a3 3 0 0 1 0 6M21 20c0-2.6-1.7-4.8-4-5.6" /></> },
   { id: 'trip', label: 'Trip', icon: <path d="M7 21V4l11 4-11 4" /> },
 ];
@@ -41,6 +44,17 @@ export default function App() {
     save(ME_KEY, id);
     setPickingMe(false);
   };
+
+  // Unread chat count for the tab badge, remembered per phone.
+  const [seen, setSeen] = useState(() => load(SEEN_KEY, ''));
+  const latest = trip?.messages.at(-1)?.created_at || '';
+  useEffect(() => {
+    if (tab === 'chat' && latest && latest !== seen) {
+      setSeen(latest);
+      save(SEEN_KEY, latest);
+    }
+  }, [tab, latest, seen]);
+  const unread = tab === 'chat' ? 0 : (trip?.messages || []).filter((m) => m.created_at > seen && m.player_id !== meId).length;
 
   const settings = trip?.settings || {};
   const page = { trip, api, me, meId };
@@ -88,6 +102,8 @@ export default function App() {
           <Leaderboard {...page} />
         ) : tab === 'score' ? (
           <Score {...page} />
+        ) : tab === 'chat' ? (
+          <Chat {...page} onPickMe={() => setPickingMe(true)} />
         ) : tab === 'players' ? (
           <Players {...page} onChooseMe={chooseMe} />
         ) : (
@@ -99,6 +115,7 @@ export default function App() {
         {TABS.map((t) => (
           <button key={t.id} className={`tab-btn ${tab === t.id ? 'active' : ''}`} onClick={() => setTab(t.id)}>
             <svg viewBox="0 0 24 24">{t.icon}</svg>
+            {t.id === 'chat' && unread > 0 && <span className="badge">{unread > 99 ? '99+' : unread}</span>}
             {t.label}
           </button>
         ))}

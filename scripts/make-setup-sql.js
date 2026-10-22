@@ -13,7 +13,8 @@ const players = ROSTER.map((name, i) => `  (${q(name)}, ${q(i % 2 === 0 ? 'A' : 
 
 const sql = `-- Golf Trip App database setup.
 -- Paste this whole file into Supabase > SQL Editor > New query, then press Run.
--- It is safe to run on a brand new project. Running it again does not wipe scores.
+-- It is safe to run on a brand new project. Running it again does not wipe scores,
+-- and it adds anything new that later versions of the app need.
 
 create table if not exists settings (
   id int primary key default 1 check (id = 1),
@@ -63,7 +64,8 @@ create table if not exists scores (
   primary key (round_id, player_id, hole)
 );
 
--- Group chat (used in step 3).
+-- Group chat. Automatic posts (birdies, blowups, par streaks) carry an
+-- event_key so each one is posted once and can be removed if a score is fixed.
 create table if not exists messages (
   id bigint generated always as identity primary key,
   player_id uuid references players on delete set null,
@@ -71,6 +73,7 @@ create table if not exists messages (
   body text not null check (length(body) between 1 and 1000),
   created_at timestamptz not null default now()
 );
+alter table messages add column if not exists event_key text unique;
 
 -- Anyone with the link can read and write. It is a private trip app, not a bank.
 do $$

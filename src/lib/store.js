@@ -28,6 +28,10 @@ function supabaseStore() {
   };
 
   async function fetchTable(table) {
+    if (table === 'messages') {
+      const latest = must(await db.from('messages').select('*').order('created_at', { ascending: false }).limit(500));
+      return latest.reverse();
+    }
     // Supabase returns at most 1000 rows per request, so page through scores.
     const rows = [];
     for (let from = 0; ; from += 1000) {
@@ -68,6 +72,9 @@ function supabaseStore() {
     async savePlayer(player) {
       return must(await db.from('players').upsert(player).select().single());
     },
+    async updatePlayers(patches) {
+      await Promise.all(patches.map(({ id, ...patch }) => db.from('players').update(patch).eq('id', id).then(must)));
+    },
     async deletePlayer(id) {
       must(await db.from('players').delete().eq('id', id));
     },
@@ -81,6 +88,14 @@ function supabaseStore() {
       must(await db.from('foursomes').delete().eq('round_id', roundId));
       const rows = groups.flatMap((g, i) => g.map((player_id) => ({ round_id: roundId, player_id, group_no: i + 1 })));
       if (rows.length) must(await db.from('foursomes').insert(rows));
+    },
+    async postMessage(playerId, body) {
+      must(await db.from('messages').insert({ player_id: playerId, kind: 'chat', body }));
+    },
+    // Post new automatic messages (skipping any already there) and take down stale ones.
+    async syncEvents(add, removeKeys) {
+      if (add.length) must(await db.from('messages').upsert(add.map((m) => ({ ...m, kind: 'event' })), { onConflict: 'event_key', ignoreDuplicates: true }));
+      if (removeKeys.length) must(await db.from('messages').delete().in('event_key', removeKeys));
     },
   };
 }
@@ -138,6 +153,12 @@ function demoStore() {
       listeners?.onTable('players', copy('players'));
       return saved;
     },
+    async updatePlayers(patches) {
+      const byId = Object.fromEntries(patches.map((p) => [p.id, p]));
+      data.players = data.players.map((p) => (byId[p.id] ? { ...p, ...byId[p.id] } : p));
+      persist('players');
+      listeners?.onTable('players', copy('players'));
+    },
     async deletePlayer(id) {
       data.players = data.players.filter((p) => p.id !== id);
       data.scores = data.scores.filter((s) => s.player_id !== id);
@@ -160,6 +181,18 @@ function demoStore() {
         .concat(groups.flatMap((g, i) => g.map((player_id) => ({ round_id: roundId, player_id, group_no: i + 1 }))));
       persist('foursomes');
       listeners?.onTable('foursomes', copy('foursomes'));
+    },
+    async postMessage(playerId, body) {
+      data.messages = [...data.messages, { id: uid(), player_id: playerId, kind: 'chat', body, created_at: new Date().toISOString() }];
+      persist('messages');
+      listeners?.onTable('messages', copy('messages'));
+    },
+    async syncEvents(add, removeKeys) {
+      const have = new Set(data.messages.map((m) => m.event_key));
+      const fresh = add.filter((m) => !have.has(m.event_key)).map((m) => ({ id: uid(), kind: 'event', created_at: new Date().toISOString(), ...m }));
+      data.messages = [...data.messages.filter((m) => !removeKeys.includes(m.event_key)), ...fresh];
+      persist('messages');
+      listeners?.onTable('messages', copy('messages'));
     },
   };
 }

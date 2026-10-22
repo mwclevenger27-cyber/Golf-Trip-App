@@ -17,6 +17,7 @@
   "homepage": "https://github.com/mwclevenger27-cyber/golf-trip-app#readme",
   "dependencies": {
     "@supabase/supabase-js": "^2.75.0",
+    "leaflet": "^1.9.4",
     "react": "^19.2.0",
     "react-dom": "^19.2.0"
   },

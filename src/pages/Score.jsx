@@ -1,6 +1,9 @@
 import { useEffect, useState } from 'react';
 import { foursomes, shuffleFoursomes, cardFor, played, courseHandicap, strokesOnHole, playerRoundLine, toParLabel } from '../lib/golf.js';
 import { defaultRoundId, formatIndex } from '../ui.jsx';
+import { greenYardages, distanceYards } from '../lib/geo.js';
+import { useGps, gpsWanted, useWakeLock } from '../useGps.js';
+import MapSheet from '../MapSheet.jsx';
 
 const HOLE_KEY = 'golf-trip-hole';
 
@@ -42,6 +45,15 @@ export default function Score({ trip, api, me, meId }) {
 
   const h = round.holes[hole];
   const allDone = (i) => group.length > 0 && group.every((p) => played(cardFor(trip.scoreMap, round.id, p.id)[i]));
+  const holeDone = allDone(hole);
+  const blanks = group.filter((p) => !played(cardFor(trip.scoreMap, round.id, p.id)[hole]));
+
+  const [gpsOn, setGpsOn] = useState(gpsWanted);
+  const [mapOpen, setMapOpen] = useState(false);
+  const gps = useGps(gpsOn || mapOpen);
+  useWakeLock(groups.length > 0);
+  const near = gps.pos && h.green && distanceYards(gps.pos, h.green) < 700;
+  const yards = near ? greenYardages(gps.pos, h) : null;
 
   return (
     <>
@@ -69,7 +81,7 @@ export default function Score({ trip, api, me, meId }) {
             ))}
           </div>
 
-          <div className="card">
+          <div className="hole-hero">
             <div className="hole-head">
               <button className="arrow" aria-label="Previous hole" onClick={() => setHole(Math.max(0, hole - 1))} disabled={hole === 0}>‹</button>
               <div className="hole-title">
@@ -78,31 +90,59 @@ export default function Score({ trip, api, me, meId }) {
               </div>
               <button className="arrow" aria-label="Next hole" onClick={() => setHole(Math.min(17, hole + 1))} disabled={hole === 17}>›</button>
             </div>
+            <button className="yard-bar" onClick={() => (gpsOn || !h.green ? setMapOpen(true) : setGpsOn(true))}>
+              {yards ? (
+                <>
+                  <span><small>F</small>{yards.front}</span>
+                  <span className="big"><small>to the middle</small>{yards.middle}</span>
+                  <span><small>B</small>{yards.back}</span>
+                  <span className="map-link">Map ›</span>
+                </>
+              ) : !h.green ? (
+                <span className="hint">🗺️ Set up the hole map for GPS yardages ›</span>
+              ) : !gpsOn ? (
+                <span className="hint">📍 Tap to turn on GPS yardages</span>
+              ) : gps.error ? (
+                <span className="hint">{gps.error}</span>
+              ) : gps.pos ? (
+                <span className="hint">You're not on this hole yet · Open map ›</span>
+              ) : (
+                <span className="hint">Finding you…</span>
+              )}
+            </button>
             <div className="hole-strip">
               {round.holes.map((_, i) => (
                 <button key={i} className={i === hole ? 'cur' : allDone(i) ? 'done' : ''} onClick={() => setHole(i)}>{i + 1}</button>
               ))}
             </div>
+          </div>
 
+          <div className="card score-card">
             {group.map((p) => (
               <PlayerHole key={p.id} player={p} trip={trip} round={round} hole={hole} isMe={p.id === meId} onSet={(v) => api.setScore(round.id, p.id, hole + 1, v)} />
             ))}
-
-            <button
-              className="btn btn-primary btn-block"
-              style={{ marginTop: 14 }}
-              onClick={() => setHole(Math.min(17, hole + 1))}
-              disabled={hole === 17}
-            >
-              {hole === 17 ? 'Last hole' : `Next: hole ${hole + 2} →`}
-            </button>
-            <div className="save-status">
-              {api.pendingCount ? `Saving ${api.pendingCount}…` : 'All scores saved'}
-              {!me && ' · Tap “Who are you?” up top to jump to your group'}
-            </div>
+            {blanks.length > 1 && (
+              <button className="btn btn-sm all-par" onClick={() => blanks.forEach((p) => api.setScore(round.id, p.id, hole + 1, h.par))}>
+                Everyone else made par
+              </button>
+            )}
           </div>
 
-          <div className="row" style={{ justifyContent: 'center' }}>
+          <button
+            className={`btn btn-primary btn-block next-btn ${holeDone ? 'ready' : ''}`}
+            onClick={() => setHole(Math.min(17, hole + 1))}
+            disabled={hole === 17}
+          >
+            {hole === 17 ? (holeDone ? 'Round complete ✓' : 'Last hole') : holeDone ? `✓ Hole ${hole + 1} done · On to ${hole + 2} →` : `Next: hole ${hole + 2} →`}
+          </button>
+          <div className="save-status">
+            {api.pendingCount ? `Saving ${api.pendingCount}…` : '✓ All scores saved'}
+            {!me && ' · Tap “Who are you?” up top to jump to your group'}
+          </div>
+
+          {mapOpen && <MapSheet round={round} hole={hole} setHole={setHole} gps={gps} api={api} onClose={() => setMapOpen(false)} />}
+
+          <div className="row" style={{ justifyContent: 'center', marginTop: 18 }}>
             <button className="btn btn-sm" onClick={makeGroups}>Reshuffle foursomes</button>
           </div>
         </>

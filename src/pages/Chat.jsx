@@ -38,6 +38,9 @@ export default function Chat({ trip, api, me, onPickMe }) {
 
   return (
     <div className="chat">
+      {messages.length === 0 && (
+        <div className="empty">Group chat. Birdies and double bogeys post here automatically.</div>
+      )}
       {messages.map((m, i) => {
         const who = byId[m.player_id];
         if (m.kind === 'event') {

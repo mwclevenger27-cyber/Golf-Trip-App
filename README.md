@@ -16,7 +16,7 @@ Each player enters their own starting handicap. It counts as 20 rounds of histor
 ## Setup (one time)
 
 1. **Database**: in Supabase, open SQL Editor → New query, paste all of [`supabase/setup.sql`](supabase/setup.sql) and press Run.
-2. **Keys**: the Supabase Project URL and anon public key go in `src/config.js` (or as `VITE_SUPABASE_URL` / `VITE_SUPABASE_ANON_KEY` on Vercel). Without them the app runs in demo mode on one phone.
+2. **Keys**: the Supabase Project URL and publishable key are in `src/config.js` (Vercel `VITE_SUPABASE_URL` / `VITE_SUPABASE_ANON_KEY` override them). Blank them to run in demo mode.
 3. **Website**: in Vercel, Add New → Project → import `golf-trip-app` → Deploy. Every update to the `main` branch republishes automatically.
 
 ## For developers

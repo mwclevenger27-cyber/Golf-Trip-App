@@ -92,10 +92,16 @@ function supabaseStore() {
     async postMessage(playerId, body) {
       must(await db.from('messages').insert({ player_id: playerId, kind: 'chat', body }));
     },
-    // Post new automatic messages (skipping any already there) and take down stale ones.
-    async syncEvents(add, removeKeys) {
+    // Make one player's automatic posts for a round match `want`: post what's
+    // missing and take down anything a corrected score no longer earns. Checks
+    // the database itself, so a post that hasn't reached this phone yet still counts.
+    async syncEvents(prefix, want) {
+      const have = new Set(must(await db.from('messages').select('event_key').like('event_key', `${prefix}%`)).map((m) => m.event_key));
+      const wantKeys = new Set(want.map((m) => m.event_key));
+      const add = want.filter((m) => !have.has(m.event_key));
+      const remove = [...have].filter((k) => !wantKeys.has(k));
       if (add.length) must(await db.from('messages').upsert(add.map((m) => ({ ...m, kind: 'event' })), { onConflict: 'event_key', ignoreDuplicates: true }));
-      if (removeKeys.length) must(await db.from('messages').delete().in('event_key', removeKeys));
+      if (remove.length) must(await db.from('messages').delete().in('event_key', remove));
     },
   };
 }
@@ -187,10 +193,12 @@ function demoStore() {
       persist('messages');
       listeners?.onTable('messages', copy('messages'));
     },
-    async syncEvents(add, removeKeys) {
-      const have = new Set(data.messages.map((m) => m.event_key));
-      const fresh = add.filter((m) => !have.has(m.event_key)).map((m) => ({ id: uid(), kind: 'event', created_at: new Date().toISOString(), ...m }));
-      data.messages = [...data.messages.filter((m) => !removeKeys.includes(m.event_key)), ...fresh];
+    async syncEvents(prefix, want) {
+      const wantKeys = new Set(want.map((m) => m.event_key));
+      const kept = data.messages.filter((m) => !m.event_key?.startsWith(prefix) || wantKeys.has(m.event_key));
+      const have = new Set(kept.map((m) => m.event_key));
+      const fresh = want.filter((m) => !have.has(m.event_key)).map((m) => ({ id: uid(), kind: 'event', created_at: new Date().toISOString(), ...m }));
+      data.messages = [...kept, ...fresh];
       persist('messages');
       listeners?.onTable('messages', copy('messages'));
     },

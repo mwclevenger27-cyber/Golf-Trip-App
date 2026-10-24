@@ -4,6 +4,7 @@ import { buildScoreMap, handicapHistory, sortRounds, detectEvents, HOLES } from 
 
 const PENDING_KEY = 'golf-trip-pending-scores';
 const keyOf = (r, p, h) => `${r}|${p}|${h}`;
+const EVENT_DELAY = 4000;
 
 function readPending() {
   try { return JSON.parse(localStorage.getItem(PENDING_KEY)) || {}; } catch { return {}; }
@@ -80,8 +81,12 @@ export function useTrip() {
   }, [store, reload, applyScore]);
 
   // After a score saves, post any new big moments for that player's round to
-  // the chat and take down ones a corrected score no longer earns.
-  const syncEvents = useCallback(async (roundId, playerId) => {
+  // the chat and take down ones a corrected score no longer earns. Runs once the
+  // score has sat still for a few seconds, so tapping + past a double bogey on
+  // the way to the right number never posts one.
+  const eventTimers = useRef({});
+  const eventChain = useRef(Promise.resolve());
+  const postEvents = useCallback(async (roundId, playerId) => {
     const d = dataRef.current;
     const round = d?.rounds.find((x) => x.id === roundId);
     const player = d?.players.find((x) => x.id === playerId);
@@ -95,14 +100,20 @@ export function useTrip() {
       player_id: playerId,
       body: `${e.emoji} ${player.name} ${e.text} at ${course}`,
     }));
-    const have = new Set(d.messages.filter((m) => m.event_key?.startsWith(prefix)).map((m) => m.event_key));
-    const wantKeys = new Set(want.map((m) => m.event_key));
     try {
-      await store.syncEvents(want.filter((m) => !have.has(m.event_key)), [...have].filter((k) => !wantKeys.has(k)));
+      await store.syncEvents(prefix, want);
     } catch {
       // Chat posts are a bonus; never let them hold up saving scores.
     }
   }, [store]);
+  const syncEvents = useCallback((roundId, playerId) => {
+    const k = `${roundId}|${playerId}`;
+    clearTimeout(eventTimers.current[k]);
+    eventTimers.current[k] = setTimeout(() => {
+      delete eventTimers.current[k];
+      eventChain.current = eventChain.current.then(() => postEvents(roundId, playerId));
+    }, EVENT_DELAY);
+  }, [postEvents]);
 
   const flush = useCallback(async () => {
     if (flushing.current) return;

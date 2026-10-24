@@ -149,13 +149,22 @@ describe('detectEvents', () => {
     c[2] = r.holes[2].par; c[3] = r.holes[3].par; c[4] = r.holes[4].par; // 3 pars
     c[5] = r.holes[5].par + 1; // bogey: nothing
     const keys = detectEvents(c, r).map((e) => e.key);
-    expect(keys).toEqual(['under|1', 'over|2', 'pars|3|3']);
+    expect(keys).toEqual([`under|1|${c[0]}`, `over|2|${c[1]}`, 'pars|3|3']);
   });
   it('posts again at 6 pars, not at 4 or 5', () => {
     const c = r.holes.map((h) => h.par);
     c[6] = r.holes[6].par + 1;
     const keys = detectEvents(c, r).map((e) => e.key).filter((k) => k.startsWith('pars'));
     expect(keys).toEqual(['pars|1|3', 'pars|1|6', 'pars|8|3', 'pars|8|6', 'pars|8|9']);
+  });
+  it('gives a corrected score a new key, so the old post comes down', () => {
+    const c = [...card];
+    c[0] = r.holes[0].par + 2;
+    const before = detectEvents(c, r)[0].key;
+    c[0] = r.holes[0].par + 3;
+    expect(detectEvents(c, r)[0].key).not.toBe(before);
+    c[0] = r.holes[0].par + 1;
+    expect(detectEvents(c, r)).toEqual([]);
   });
   it('calls a 1 a hole in one', () => {
     const c = [...card];

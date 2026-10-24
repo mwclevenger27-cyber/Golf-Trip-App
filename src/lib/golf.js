@@ -257,10 +257,10 @@ export function detectEvents(card, round) {
       events.push({ key: `ace|${hole}`, emoji: '🚨', text: `made a HOLE IN ONE on ${hole}` });
     } else if (diff <= -1) {
       const [emoji, phrase] = UNDER[-diff] || ['🤯', `went ${diff} on a single hole`];
-      events.push({ key: `under|${hole}`, emoji, text: `${phrase} on ${hole}` });
+      events.push({ key: `under|${hole}|${s}`, emoji, text: `${phrase} on ${hole}` });
     } else if (diff >= 2) {
       const [emoji, phrase] = OVER[diff] || ['💀', `made a ${s} (+${diff})`];
-      events.push({ key: `over|${hole}`, emoji, text: `${phrase} on ${hole}` });
+      events.push({ key: `over|${hole}|${s}`, emoji, text: `${phrase} on ${hole}` });
     }
   });
   // Pars in a row: post at 3, 6, 9... within each unbroken run.
